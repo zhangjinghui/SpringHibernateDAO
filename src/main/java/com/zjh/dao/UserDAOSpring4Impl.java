@@ -1,5 +1,10 @@
 package com.zjh.dao;
-
+/*
+ * 1. Spring4弃用HibernateTemplate
+ * 2. 依赖注入关系:dataSouce->sessionFactory->DAO组件
+ * 3. DAO组件需要添加成员变量sessionFactory及其getter、setter方法
+ * 4. this.getSessionFactory().getCurrentSession()获取session，调用相关操作
+ */
 import java.util.List;
 
 import org.hibernate.Session;

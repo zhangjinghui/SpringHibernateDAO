@@ -1,5 +1,10 @@
 package com.zjh.dao;
-
+/*
+ * 1. Spring3使用HibernateTemplate
+ * 2. 依赖注入关系:dataSouce->sessionFactory->HibernateTemplate
+ * 3. DAO组件继承HibernateDaoSupport
+ * 4. this.getHibernateTemplate()获取hibernateTemplate，调用模板已封装的相关操作
+ */
 import java.util.List;
 
 import org.hibernate.HibernateException;
