@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="    
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.0.xsd  
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	<!-- dataSource->sessionFactory->dao -->
+
+	<bean id="dataSource1" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl"
+			value="jdbc:mysql://localhost:3306/springtest?useUnicode=true&amp;characterEncoding=utf-8" />
+		<property name="user" value="root" />
+		<property name="password" value="zhangjinghui" />
+		<property name="maxPoolSize" value="20" />
+		<property name="minPoolSize" value="1" />
+		<property name="initialPoolSize" value="1" />
+		<property name="maxIdleTime" value="20" />
+	</bean>
+
+	<bean id="sessionFactory1"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource1" />
+		<property name="mappingResources">
+			<list>
+				<value>com/zjh/po/User.hbm.xml</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLInnoDBDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- <bean id="sessionFactory1" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean"> 
+		<property name="configLocation" value="classpath:hibernate.cfg.xml"> </property> 
+		</bean> -->
+
+	<!-- 配置transactionManager时，dataSource不能在hibernate中配置，只能在applicationContext.xml中配置 -->
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory1" />
+	</bean>
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="*" isolation="DEFAULT" propagation="REQUIRED"
+				timeout="5" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut id="myPointcut" expression="execution(* com.zjh.dao.*Impl.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="myPointcut" />
+	</aop:config>
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+	
+	<bean id="hudao" class="com.zjh.dao.UserDAOSpring4Impl">
+		<property name="sessionFactory" ref="sessionFactory1"></property>
+	</bean>
+
+</beans>

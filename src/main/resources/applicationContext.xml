@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="    
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd  
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd  
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee-4.0.xsd  
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd">
+	<!-- dataSource->sessionFactory->HibernateTemplate->dao -->
+
+	<bean id="dataSource1" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="com.mysql.jdbc.Driver" />
+		<property name="jdbcUrl"
+			value="jdbc:mysql://localhost:3306/springtest?useUnicode=true&amp;characterEncoding=utf-8" />
+		<property name="user" value="root" />
+		<property name="password" value="zhangjinghui" />
+		<property name="maxPoolSize" value="20" />
+		<property name="minPoolSize" value="1" />
+		<property name="initialPoolSize" value="1" />
+		<property name="maxIdleTime" value="20" />
+	</bean>
+
+	<bean id="sessionFactory1"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource1" />
+		<property name="mappingResources">
+			<list>
+				<value>com/zjh/po/User.hbm.xml</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+				<prop key="hibernate.dialect">org.hibernate.dialect.MySQLInnoDBDialect</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.current_session_context_class">org.springframework.orm.hibernate4.SpringSessionContext
+				</prop>
+			</props>
+		</property>
+	</bean>
+
+	<!-- <bean id="sessionFactory1" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean"> 
+		<property name="configLocation" value="classpath:hibernate.cfg.xml"> </property> 
+		</bean> -->
+
+	<bean id="hibernateTemplate1" class="org.springframework.orm.hibernate4.HibernateTemplate">
+		<property name="sessionFactory" ref="sessionFactory1"></property>
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory1" />
+	</bean>
+	<!-- 配置事务增强处理Bean,指定事务管理器 -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<!-- 用于配置详细的事务语义 -->
+		<tx:attributes>
+			<!-- 所有以'get'开头的方法是read-only的 -->
+			<tx:method name="get*" read-only="true" />
+			<!-- 其他方法使用默认的事务设置，指定超时时长为5秒 -->
+			<tx:method name="*" isolation="DEFAULT" propagation="REQUIRED"
+				timeout="5" />
+		</tx:attributes>
+	</tx:advice>
+	<!-- AOP配置的元素 -->
+	<aop:config>
+		<!-- 配置一个切入点，匹配org.crazyit.app.dao.impl包下 所有以Impl结尾的类里、所有方法的执行 -->
+		<aop:pointcut id="myPointcut" expression="execution(* com.zjh.dao.*.*(..))" />
+		<!-- 指定在myPointcut切入点应用txAdvice事务增强处理 -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="myPointcut" />
+	</aop:config>
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+
+	<bean id="hudao" class="com.zjh.dao.UserDAOSpring3Impl">
+		<property name="hibernateTemplate" ref="hibernateTemplate1"></property>
+	</bean>
+
+</beans>
